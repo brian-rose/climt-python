@@ -44,9 +44,10 @@ Extensions = [
     {'name':'cam3_radiation',
      'dir':'src/radiation/cam3',
      'cppflags':'-DPLEV=%i' % KM,
-     'lib':['netcdf','netcdff'],
-     'libdir': [NC_LIB],
-     'incdir': [NC_INC]},
+     #'lib':['netcdf','netcdff'],
+     #'libdir': [NC_LIB],
+     #'incdir': [NC_INC]},
+     },
     {'name':'chou_radiation',
      'dir':'src/radiation/chou'},
     {'name':'greygas_radiation',
@@ -197,7 +198,7 @@ def build_dycore(name=None, dir=None, cppflags='', f77flags='', f90flags='', \
 
 def setupClimt():
     # Build all extensions
-    for ext in Extensions: 
+    for ext in Extensions:
         if ext['name'] == 'gfs_dynamics' :
             build_dycore(**ext)
 
