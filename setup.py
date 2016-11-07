@@ -9,9 +9,9 @@ from distutils.dep_util import newer
 KM = 28
 JM = 1
 IM = 1
-NC_INC = '/usr/include'
-NC_LIB = '/usr/lib'
 ##----------------------
+#  Brian:  we have removed netcdf dependence from fortran builds
+#  All netcdf file I/O now happens in Python
 
 if '--lite' in sys.argv:
     sys.argv.pop(sys.argv.index('--lite'))
@@ -43,11 +43,7 @@ Extensions = [
      'cppflags':'-DSUN -DPLON=%i -DPLEV=%i -DPLEVR=%i' % (IM,KM,KM)},
     {'name':'cam3_radiation',
      'dir':'src/radiation/cam3',
-     'cppflags':'-DPLEV=%i' % KM,
-     #'lib':['netcdf','netcdff'],
-     #'libdir': [NC_LIB],
-     #'incdir': [NC_INC]},
-     },
+     'cppflags':'-DPLEV=%i' % KM},
     {'name':'chou_radiation',
      'dir':'src/radiation/chou'},
     {'name':'greygas_radiation',
@@ -117,9 +113,9 @@ for ExtList in [Extensions,ExtensionsLite]:
         for ext in ExtList:
             ext['cppflags']='-WF,'+string.join(ext['cppflags'].split(),',')
 
-def getSources(dir):
+def getSources(dir, source_file_name='sources_in_order_of_compilation'):
     #Gets list of source files for extensions
-    SrcFile = os.path.join(dir,'sources_in_order_of_compilation')
+    SrcFile = os.path.join(dir, source_file_name)
     if os.path.exists(SrcFile):
         Sources = open(SrcFile).readlines()
         Sources = [os.path.join(dir,s[:-1]) for s in Sources]
@@ -130,7 +126,6 @@ def getSources(dir):
             if 'ignore' not in ww[0]:
                 for pattern in ['*.f','*.F','*.f90','*.F90']:
                     Sources += glob.glob(os.path.join(ww[0],pattern))
-
     return Sources
 
 def buildNeeded(target,src):
@@ -155,7 +150,19 @@ def build_ext(name=None, dir=None, cppflags='', f77flags='', f90flags='', \
     if buildNeeded(target,src):
         print '\n Building %s ... \n' % os.path.basename(target)
         # generate signature file
-        os.system('f2py --overwrite-signature %s -m _%s -h _%s.pyf'%(driver,name,name))
+        #  If a file called `sources_signature_file` is present,
+        #  add all the files in that list to the signature.
+        #  (Currently used for CAM3 radiation module,
+        #   will also be needed for RRTM)
+        #  Otherwise just add Driver.F90
+        pyf_src_name = 'sources_signature_file'
+        if os.path.exists(os.path.join(dir, pyf_src_name)):
+            print 'Found source file list for signature file'
+            src_pyf = getSources(dir, source_file_name='sources_signature_file')
+            src_pyf_str = string.join(src_pyf)
+        else:
+            src_pyf_str = driver
+        os.system('f2py --overwrite-signature %s -m _%s -h _%s.pyf'%(src_pyf_str,name,name))
         # compile extension
         F2pyCommand = []
         F2pyCommand.append('f2py -c -m _%s' % name)
