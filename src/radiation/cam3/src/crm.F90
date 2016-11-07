@@ -199,7 +199,6 @@ subroutine crm(  &
   real(r8) :: aerfwd(nspint,naer_groups) ! Aerosol column averaged forward scattering
 
   ! Set up variables
-  absemsfile = 'None'
   doabsems = .true.
   lchnk = 1
   ncol = 1
